@@ -4,13 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 ff = "0.12.0"
 hex = "0.4.3"
 hex-literal = "0.3.4"
 k256 = "0.12.0"
-blstrs = { version = "0.6.0" }
-neptune = "8.1.0"
-generic-array = "0.14.6"
+getrandom = { version = "0.2.8", features = ["js"] }
+wasm-bindgen = { version = "0.2.81"}
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 typenum = "1.16.0"
+neptune = "8.1.0"
+blstrs = { version = "0.6.0" }
+

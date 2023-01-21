@@ -1,5 +1,5 @@
-#[cfg(test)]
 mod k256_consts;
+mod poseidon_k256;
 
 use ff::PrimeField;
 
