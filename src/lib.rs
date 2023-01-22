@@ -45,7 +45,11 @@ impl<F: PrimeField> Poseidon<F> {
     pub fn hash(&mut self, input: Vec<F>) -> F {
         // add padding
         let mut input = input.clone();
-        input.push(F::zero());
+
+        let domain_tag = 3; // 2^arity - 1
+        input.insert(0, F::from(domain_tag));
+
+        self.state = input;
 
         let full_rounds_half = self.constants.num_full_rounds / 2;
 
@@ -64,7 +68,7 @@ impl<F: PrimeField> Poseidon<F> {
             self.full_round();
         }
 
-        self.state[0]
+        self.state[1]
     }
 
     fn add_constants(&mut self) {
@@ -74,16 +78,19 @@ impl<F: PrimeField> Poseidon<F> {
         }
     }
 
+    // MDS matrix multiplication
     fn matrix_mul(&mut self) {
-        // MDS matrix
-        // matrix-vector multiplication
-        for i in 0..self.state.len() {
-            let mut row_result = F::zero();
-            for j in 0..self.state.len() {
-                row_result += self.state[i] * self.constants.mds_matrix[i][j];
+        let mut result = Vec::new();
+
+        for val in self.constants.mds_matrix.iter() {
+            let mut tmp = F::zero();
+            for (j, element) in self.state.iter().enumerate() {
+                tmp += val[j] * element
             }
-            self.state[i] = row_result;
+            result.push(tmp)
         }
+
+        self.state = result;
     }
 
     fn full_round(&mut self) {
@@ -181,7 +188,6 @@ mod tests {
         let mut poseidon = Poseidon::new(constants);
         let digest = poseidon.hash(input);
 
-        // !Still fails, but it's a start!
         // Check that the two implementations produce the same output
         assert_eq!(digest, np_digest);
     }
