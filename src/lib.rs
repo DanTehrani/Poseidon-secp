@@ -109,7 +109,6 @@ impl<F: PrimeField> Poseidon<F> {
     }
 
     fn partial_round(&mut self) {
-        let t = self.state.len();
         self.add_constants();
 
         // S-box
@@ -127,14 +126,14 @@ mod tests {
     use super::*;
     use blstrs;
     use ff::Field;
-    use k256;
+    use secq256k1::field::field_secp;
 
     #[test]
     fn test_k256() {
-        type Scalar = k256::Scalar;
+        type Scalar = field_secp::FieldElement;
         let input = vec![
-            Scalar::from_str_vartime("1").unwrap(),
-            Scalar::from_str_vartime("2").unwrap(),
+            Scalar::from_str_vartime("1234567").unwrap(),
+            Scalar::from_str_vartime("109987").unwrap(),
         ];
 
         let round_constants: Vec<Scalar> = k256_consts::ROUND_CONSTANTS
@@ -161,7 +160,15 @@ mod tests {
         let mut poseidon = Poseidon::new(constants);
 
         let digest = poseidon.hash(input);
-        println!("digest: {}", hex::encode(digest.to_bytes()));
+
+        assert_eq!(
+            digest,
+            Scalar::from_bytes(&[
+                55, 65, 152, 83, 150, 215, 77, 156, 41, 188, 147, 242, 103, 178, 202, 106, 26, 32,
+                186, 27, 179, 162, 21, 251, 12, 220, 119, 154, 61, 114, 65, 138
+            ])
+            .unwrap()
+        );
     }
 
     use neptune::poseidon::{Poseidon as NeptunePoseidon, PoseidonConstants as NeptuneConstants};

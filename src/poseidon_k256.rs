@@ -1,31 +1,33 @@
 use crate::{k256_consts, Poseidon, PoseidonConstants};
 use ff::PrimeField;
-use k256::{elliptic_curve::ScalarCore, Scalar};
+use secq256k1::field::field_secq::FieldElement;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[allow(dead_code)]
 pub fn poseidon(input_bytes: &[u8]) -> Result<Vec<u8>, JsValue> {
     let mut input = Vec::new();
     for i in 0..(input_bytes.len() / 32) {
-        let val = ScalarCore::from_be_slice(&input_bytes[(i * 32)..(i + 1) * 32]).unwrap();
-        input.push(Scalar::from(val));
+        let f: [u8; 32] = input_bytes[(i * 32)..(i + 1) * 32].try_into().unwrap();
+        let val = FieldElement::from_bytes(&f).unwrap();
+        input.push(FieldElement::from(val));
     }
 
-    let round_constants: Vec<Scalar> = k256_consts::ROUND_CONSTANTS
+    let round_constants: Vec<FieldElement> = k256_consts::ROUND_CONSTANTS
         .iter()
-        .map(|x| Scalar::from_str_vartime(x).unwrap())
+        .map(|x| FieldElement::from_str_vartime(x).unwrap())
         .collect();
 
-    let mds_matrix: Vec<Vec<Scalar>> = k256_consts::MDS_MATRIX
+    let mds_matrix: Vec<Vec<FieldElement>> = k256_consts::MDS_MATRIX
         .iter()
         .map(|x| {
             x.iter()
-                .map(|y| Scalar::from_str_vartime(y).unwrap())
-                .collect::<Vec<Scalar>>()
+                .map(|y| FieldElement::from_str_vartime(y).unwrap())
+                .collect::<Vec<FieldElement>>()
         })
         .collect();
 
-    let constants = PoseidonConstants::<Scalar>::new(
+    let constants = PoseidonConstants::<FieldElement>::new(
         round_constants,
         mds_matrix,
         k256_consts::NUM_FULL_ROUNDS,
